@@ -1,0 +1,5 @@
+require("prototypes.entity.treefarm-mod")
+require("prototypes.item.treefarm-mod")
+require("prototypes.recipe.treefarm-mod")
+require("prototypes.recipe-category.treefarm-mod")
+require("prototypes.technology.treefarm-mod")
