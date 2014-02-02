@@ -147,7 +147,7 @@ end
 game.onevent(defines.events.ontick, function(event)
 
 	glob.treefarm.tick = glob.treefarm.tick + 1
-	
+
 	if (glob.treefarm.tick % 60) == 0 then
 		for k, field in pairs(glob.treefarm.field) do
 			if field.valid then
@@ -281,15 +281,23 @@ function calcTreeEfficiency(position)
 	local efficiency = 0
 
 	if game.gettile(position.x, position.y).name == "grass" then
-		efficiency = 1.00
+		efficiency = efficiency + 1.00
+	elseif game.gettile(position.x, position.y).name == "grass-medium" then
+		efficiency = efficiency + 1.00
+	elseif game.gettile(position.x, position.y).name == "grass-dry" then
+		efficiency = efficiency + 1.00
 	elseif game.gettile(position.x, position.y).name == "dirt" then
-		efficiency = 1.00
+		efficiency = efficiency + 0.95
+	elseif game.gettile(position.x, position.y).name == "dirt-dark" then
+		efficiency = efficiency + 0.95
 	elseif game.gettile(position.x, position.y).name == "hills" then
-		efficiency = 0.75
+		efficiency = efficiency + 0.70
 	elseif game.gettile(position.x, position.y).name == "sand" then
-		efficiency = 0.50
+		efficiency = efficiency + 0.60
+	elseif game.gettile(position.x, position.y).name == "sand-dark" then
+		efficiency = efficiency + 0.60
 	else
-		efficiency = 0.00
+		efficiency = efficiency + 0.00
 	end
 
 	return efficiency

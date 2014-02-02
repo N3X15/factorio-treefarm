@@ -7,7 +7,7 @@ data:extend(
 		flags = {"placeable-neutral", "player-creation"},
 		minable = {mining_time = 1,result = "field"},
 		max_health = 1,
-		collision_box = {{-0.75,-0.75},{0.25,0.25}},
+		collision_box = {{-0.65,-0.75},{0.40,0.25}},
 		selection_box = {{-1.0,-1.0},{8.0,8.0}},
 		inventory_size = 3,
 		picture = 	{
@@ -15,7 +15,7 @@ data:extend(
 						priority = "extra-high",
 						width = 512,
 						height = 512,
-						shift = {-0.25, -0.25}
+						shift = {0.00, -0.25}
 					}
 	},
 
@@ -39,9 +39,9 @@ data:extend(
 						shift = {0.35, -0.5}
 					},
 		crafting_categories = {"treefarm-mod-smelting"},
-		effectivity = 1,
 		energy_source = {type = "electric",input_priority = "secondary", emissions = 6 / 3},
-		energy_usage_per_tick = 0.1,
+		energy_usage = "6W",
+		crafting_speed = 2,
 		ingredient_count = 1
 	},
 
@@ -65,9 +65,9 @@ data:extend(
 						shift = {0.0, -0.1}
 					},
 		crafting_categories = {"treefarm-mod-crushing"},
-		effectivity = 20,
+		crafting_speed = 1,
 		energy_source = {type = "electric",input_priority = "secondary", emissions = 0.05 / 1.5},
-		energy_usage_per_tick = 0.5,
+		energy_usage = "50W",
 		ingredient_count = 1
 	},
 
@@ -79,7 +79,7 @@ data:extend(
 		minable = {hardness = 0.2,mining_time = 0.5,result = "chemical-lab"},
 		max_health = 100,
 		resistances = {{type = "fire",percent = 70}},
-		collision_box = {{-2.0,-2.0},{2.0,2.0}},
+		collision_box = {{-2.15,-2.15},{2.15,2.15}},
 		selection_box = {{-2.0,-2.0},{2.0,2.0}},
 		animation = {
 						filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/chemical-lab.png",
@@ -91,9 +91,9 @@ data:extend(
 						shift = {0.0, 0.0}
 					},
 		crafting_categories = {"treefarm-mod-chemistry"},
-		effectivity = 1,
+		crafting_speed = 1,
 		energy_source = {type = "electric",input_priority = "secondary", emissions = 0.15 / 1.5},
-		energy_usage_per_tick = 0.5,
+		energy_usage = "50W",
 		ingredient_count = 4
 	},
 
@@ -132,6 +132,7 @@ data:extend(
 	{
 		type = "tree",
 		name = "very-small-tree",
+		order="b-b-g",
 		icon = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/grass.png",
 		flags = {"placeable-neutral", "placeable-off-grid", "breaths-air"},
 		emissions_per_tick = -0.0002,
@@ -196,6 +197,7 @@ data:extend(
 	{
 		type = "tree",
 		name = "small-tree",
+		order="b-b-g",
 		icon = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/grass.png",
 		flags = {"placeable-neutral", "placeable-off-grid", "breaths-air"},
 		emissions_per_tick = -0.0003,
@@ -260,6 +262,7 @@ data:extend(
 	{
 		type = "tree",
 		name = "medium-tree",
+		order="b-b-g",
 		icon = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/grass.png",
 		flags = {"placeable-neutral", "placeable-off-grid", "breaths-air"},
 		emissions_per_tick = -0.0004,
