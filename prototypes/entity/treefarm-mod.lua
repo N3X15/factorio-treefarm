@@ -1,3 +1,36 @@
+pipecoverspictures = function()
+  return {
+    north =
+    {
+      filename = "__base__/graphics/entity/pipe-covers/pipe-cover-north.png",
+      priority = "extra-high",
+      width = 44,
+      height = 32
+    },
+    east =
+    {
+      filename = "__base__/graphics/entity/pipe-covers/pipe-cover-east.png",
+      priority = "extra-high",
+      width = 32,
+      height = 32
+    },
+    south =
+    {
+      filename = "__base__/graphics/entity/pipe-covers/pipe-cover-south.png",
+      priority = "extra-high",
+      width = 46,
+      height = 52
+    },
+    west =
+    {
+      filename = "__base__/graphics/entity/pipe-covers/pipe-cover-west.png",
+      priority = "extra-high",
+      width = 32,
+      height = 32
+    }
+  }
+end
+
 data:extend(
 {
 	{
@@ -23,23 +56,130 @@ data:extend(
 		type = "assembling-machine",
 		name = "cokery",
 		icon = "__Treefarm-Mod__/graphics/icons/cokery.png",
-		flags = {"placeable-neutral","player-creation"},
+		flags = {"placeable-neutral","placeable-player", "player-creation"},
 		minable = {hardness = 0.2,mining_time = 0.5,result = "cokery"},
-		max_health = 100,
+		max_health = 200,
+		corpse = "big-remnants",
 		resistances = {{type = "fire",percent = 70}},
-		collision_box = {{-1.35,-1.9},{1.45,1.9}},
-		selection_box = {{-1.45,-2.0},{1.55,2.0}},
-		animation =	{
-						filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery.png",
-						priority = "medium",
-						frame_width = 96,
-						frame_height = 142,
-						frame_count = 15,
-						line_length = 15,
-						shift = {0.35, -0.5}
-					},
+		collision_box = {{-1.4, -2.4}, {1.4, 2.4}},
+		selection_box = {{-1.5, -2.5}, {1.5, 2.5}},
+		module_slots = 2,
+		allowed_effects = {"speed"},
+		animation =
+		{
+			north =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-vertical.png",
+				frame_width = 180,
+				frame_height = 222,
+				frame_count = 32,
+				line_length = 8,
+				shift = {1.2, 1}
+			},
+			south =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-vertical.png",
+				frame_width = 180,
+				frame_height = 222,
+				frame_count = 32,
+				line_length = 8,
+				shift = {1.2, 1}
+			},
+			west =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-vertical.png",
+				frame_width = 180,
+				frame_height = 222,
+				frame_count = 32,
+				line_length = 8,
+				shift = {1.2, 1}
+
+				--filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-horizontal.png",
+				--frame_width = 219,
+				--frame_height = 150,
+				--frame_count = 32,
+				--line_length = 8,
+				--shift = {1.1, -0.3}
+			},
+			east =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-vertical.png",
+				frame_width = 180,
+				frame_height = 222,
+				frame_count = 32,
+				line_length = 8,
+				shift = {1.2, 1}
+
+				--filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/cokery-horizontal.png",
+				--frame_width = 219,
+				--frame_height = 150,
+				--frame_count = 32,
+				--line_length = 8,
+				--shift = {1.1, -0.3}
+			}				
+		},
+		working_visualisations =
+		{
+			{
+				north_position = { 0.0, -1.0},
+				south_position = { 0.0, -1.0},
+				west_position  = { 0.0, -1.0},	--{ 0.0, -2.0},
+				east_position  = { 0.0, -1.0},	--{ 0.0, -2.0},
+			
+				animation =
+				{
+					filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/fire.png",
+					frame_count = 29,
+					frame_width = 16,
+					frame_height = 35,
+					scale = 1.5,
+					shift = {0, -0.5625},
+					run_mode="backward"
+				}
+			},
+			{
+				north_position = { 0.0, -2.0},
+				south_position = { 0.0, -2.0},
+				west_position  = { 0.0, -2.0},	--{-1.3, -2.0},
+				east_position  = { 0.0, -2.0},	--{-1.3, -2.0},
+			
+				animation =
+				{
+					filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/fire.png",
+					frame_count = 29,
+					frame_width = 16,
+					frame_height = 35,
+					scale = 1.5,
+					shift = {0, -0.5625},
+					run_mode="backward"
+				}
+			},
+			{
+				north_position = { 0.0,  0.0},
+				south_position = { 0.0,  0.0},
+				west_position  = { 0.0,  0.0},	--{ 1.3, -2.0},
+				east_position  = { 0.0,  0.0},	--{ 1.3, -2.0},
+			
+				animation =
+				{
+					filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/fire.png",
+					frame_count = 29,
+					frame_width = 16,
+					frame_height = 35,
+					scale = 1.5,
+					shift = {0, -0.5625},
+					run_mode="backward"
+				}
+			}
+		},
 		crafting_categories = {"treefarm-mod-smelting"},
-		energy_source = {type = "electric",input_priority = "secondary", emissions = 6 / 3},
+		energy_source =
+		{
+			type = "electric",
+			input_priority = "secondary",
+			usage_priority = "secondary-input",
+			emissions = 6 / 3
+		},
 		energy_usage = "6W",
 		crafting_speed = 2,
 		ingredient_count = 1
@@ -66,39 +206,95 @@ data:extend(
 					},
 		crafting_categories = {"treefarm-mod-crushing"},
 		crafting_speed = 1,
-		energy_source = {type = "electric",input_priority = "secondary", emissions = 0.05 / 1.5},
-		energy_usage = "50W",
+		energy_source = {type = "electric",input_priority = "secondary", usage_priority = "secondary-input", emissions = 0.05 / 1.5},
+		energy_usage = "50kW",
 		ingredient_count = 1
 	},
 
 	{
 		type = "assembling-machine",
-		name = "chemical-lab",
-		icon = "__Treefarm-Mod__/graphics/icons/chemical-lab.png",
+		name = "hydroculture",
+		icon = "__Treefarm-Mod__/graphics/icons/hydroculture.png",
 		flags = {"placeable-neutral","player-creation"},
-		minable = {hardness = 0.2,mining_time = 0.5,result = "chemical-lab"},
-		max_health = 100,
+		minable = {hardness = 0.2,mining_time = 0.5,result = "hydroculture"},
+		max_health = 200,
 		resistances = {{type = "fire",percent = 70}},
-		collision_box = {{-2.15,-2.15},{2.15,2.15}},
-		selection_box = {{-2.0,-2.0},{2.0,2.0}},
-		animation = {
-						filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/chemical-lab.png",
+		collision_box = {{-7.9, -7.9}, {7.9, 7.9}},
+		selection_box = {{-8.0, -8.0}, {8.0, 8.0}},
+		animation =
+		{
+			north =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/hydroculture-vert.png",
 						priority = "medium",
-						frame_width = 128,
-						frame_height = 128,
+						frame_width = 512,
+						frame_height = 512,
 						frame_count = 1,
-						line_length = 1,
 						shift = {0.0, 0.0}
-					},
-		crafting_categories = {"treefarm-mod-chemistry"},
+			},
+			south =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/hydroculture-vert.png",
+						priority = "medium",
+						frame_width = 512,
+						frame_height = 512,
+						frame_count = 1,
+						shift = {0.0, 0.0}
+			},
+			west =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/hydroculture-horz.png",
+						priority = "medium",
+						frame_width = 512,
+						frame_height = 512,
+						frame_count = 1,
+						shift = {0.0, 0.0}
+			},
+			east =
+			{
+				filename = "__Treefarm-Mod__/graphics/entity/Treefarm-Mod/hydroculture-horz.png",
+						priority = "medium",
+						frame_width = 512,
+						frame_height = 512,
+						frame_count = 1,
+						shift = {0.0, 0.0}
+			}				
+		},
+		crafting_categories = {"treefarm-mod-hydroculture"},
 		crafting_speed = 1,
-		energy_source = {type = "electric",input_priority = "secondary", emissions = 0.15 / 1.5},
-		energy_usage = "50W",
-		ingredient_count = 4
+		energy_source = {type = "electric",input_priority = "secondary", usage_priority = "secondary-input", emissions = -0.001 / 1.5},
+		energy_usage = "100kW",
+		ingredient_count = 2,
+		fluid_boxes =
+		{
+			{
+				production_type = "input",
+				pipe_covers = pipecoverspictures(),
+				base_area = 10,
+				base_level = -1,
+				pipe_connections = {{ type="input", position = {-3.5, 8.5} }}
+			},
+			{
+				production_type = "input",
+				pipe_covers = pipecoverspictures(),
+				base_area = 10,
+				base_level = -1,
+				pipe_connections = {{ type="input", position = {3.5, 8.5} }}
+			},
+			{
+				production_type = "output",
+				pipe_covers = pipecoverspictures(),
+				base_level = 1,
+				pipe_connections = {{ position = {-3.5, -8.5} }}
+			},
+			{
+				production_type = "output",
+				pipe_covers = pipecoverspictures(),
+				base_level = 1,
+				pipe_connections = {{ position = {3.5, -8.5} }}
+			}
+		}
 	},
-
-
-
 
 	{
 		type = "tree",

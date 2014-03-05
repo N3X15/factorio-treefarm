@@ -31,12 +31,11 @@ game.onevent(defines.events.onentitydied, function(event)
 	if event.entity.name == "field" then
 		checkFieldValidity()
 	end
-
-	if     (event.entity.name == "germling")
-		or (event.entity.name == "very-small-tree") 
-		or (event.entity.name == "small-tree") 
-		or (event.entity.name == "medium-tree")
-		or (event.entity.name == "big-tree")
+	if     (event.entity.name == "dark-thin-tree")
+		or (event.entity.name == "green-thin-tree") 
+		or (event.entity.name == "dark-green-thin-tree") 
+		or (event.entity.name == "green-tree")
+		or (event.entity.name == "dark-green-tree")
 		then
 			checkTreeValidity()
 	end
@@ -66,12 +65,11 @@ game.onevent(defines.events.onplayermineditem, function(event)
 	if event.itemstack.name == "field" then
 		checkFieldValidity()
 	end
-
-	if     (event.itemstack.name == "germling") 
-		or (event.itemstack.name == "very-small-tree") 
-		or (event.itemstack.name == "small-tree") 
-		or (event.itemstack.name == "medium-tree")
-		or (event.itemstack.name == "big-tree")
+	if     (event.itemstack.name == "dark-thin-tree")
+		or (event.itemstack.name == "green-thin-tree") 
+		or (event.itemstack.name == "dark-green-thin-tree") 
+		or (event.itemstack.name == "green-tree")
+		or (event.itemstack.name == "dark-green-tree")
 		then
 			checkTreeValidity()
 	end
@@ -94,9 +92,57 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if #blockingField > 1 then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print("You cannot place field on other fields!")
+			game.player.print(game.gettext("msg_buildingFail"))
 			return
 		end
+
+		blockingField = {}
+		blockingField = game.findentitiesfiltered{area = {{x = event.createdentity.position.x - 8, y = event.createdentity.position.y},{x = event.createdentity.position.x, y = event.createdentity.position.y + 8}}, name="field"}
+		if #blockingField > 1 then
+			game.player.character.insert{name="field", count=1}
+			event.createdentity.destroy()
+			game.player.print(game.gettext("msg_buildingFail"))
+			return
+		end
+
+		blockingField = {}
+		blockingField = game.findentitiesfiltered{area = {{x = event.createdentity.position.x - 8, y = event.createdentity.position.y - 8},{x = event.createdentity.position.x + 8, y = event.createdentity.position.y}}, name="field"}
+		if #blockingField > 1 then
+			game.player.character.insert{name="field", count=1}
+			event.createdentity.destroy()
+			game.player.print(game.gettext("msg_buildingFail"))
+			return
+		end
+
+		local xi, yi
+		local fieldPos = {x = event.createdentity.position.x, y = event.createdentity.position.y}
+		local buildEnable = true
+		for xi = 0, 7 do
+			for yi = 0, 7 do
+				if (xi == 0) and (yi == 0) then
+					-- do nothing
+				else
+					if not game.canplaceentity{name="wooden-chest", position = {fieldPos.x + xi, fieldPos.y + yi}} then
+						local playerEnt = game.findentitiesfiltered{area = {{fieldPos.x + xi - 1, fieldPos.y + yi - 1},{fieldPos.x + xi + 1, fieldPos.y + yi + 1}}, name="player"}
+						if #playerEnt > 0 then
+							-- do nothing
+						else
+							buildEnable = false
+						end
+					end
+				end
+			end
+		end
+
+		if buildEnable == false then
+			game.player.character.insert{name="field", count=1}
+			event.createdentity.destroy()
+			game.player.print(game.gettext("msg_buildingFail"))
+			return
+		end
+
+
+
 		local efficiency = {}
 		local x,y
 		efficiency[1] = calcEfficiency({x = event.createdentity.position.x + 0, y = event.createdentity.position.y + 0})
@@ -107,7 +153,7 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if (efficiency[1] == 0) or (efficiency[2] == 0) or (efficiency[3] == 0) or (efficiency[4] == 0) then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print("You cannot place field on water!")
+			game.player.print(game.gettext("msg_buildingFail"))
 		else
 			efficiency[5] = (efficiency[1] + efficiency[2] + efficiency[3] + efficiency[4]) / 4
 			glob.treefarm.field[#glob.treefarm.field + 1] = event.createdentity
@@ -123,11 +169,11 @@ game.onevent(defines.events.onbuiltentity, function(event)
 end)
 
 function detectTreeStatus(entity)
-	if     entity.name == "germling"        then return 1
-	elseif entity.name == "very-small-tree" then return 2
-	elseif entity.name == "small-tree"      then return 3
-	elseif entity.name == "medium-tree"     then return 4
-	elseif entity.name == "big-tree"        then return 5
+	if     entity.name == "dark-thin-tree"        then return 1
+	elseif entity.name == "green-thin-tree"       then return 2
+	elseif entity.name == "dark-green-thin-tree"  then return 3
+	elseif entity.name == "green-tree"            then return 4
+	elseif entity.name == "dark-green-tree"       then return 5
 	end
 end
 
@@ -174,7 +220,7 @@ game.onevent(defines.events.ontick, function(event)
 							if growntree[1] == nil then
 								if #growntrees < 40 then
 									--game.createentity{name = "big-tree", position = treeposition}
-									addTreeToFarm(game.createentity{name = "germling", position = treeposition},1)
+									addTreeToFarm(game.createentity{name = "dark-thin-tree", position = treeposition},1)
 									treeplaced = true
 									break
 								else
@@ -359,7 +405,6 @@ function startingItems()
 	game.player.character.insert{name="basic-transport-belt", count=128}
 	game.player.character.insert{name="steam-engine", count=16}
 	game.player.character.insert{name="boiler", count=32}
-	game.player.character.insert{name="gun-turret", count=32}
 	game.player.character.insert{name="lab", count=8}
 	game.player.character.insert{name="pipe", count=64}
 	game.player.character.insert{name="basic-mining-drill", count=32}
@@ -372,10 +417,24 @@ function startingItems()
 	game.player.character.insert{name="fertilizer", count=128}
 	game.player.character.insert{name="coal", count=128}
 	game.player.character.insert{name="raw-wood", count=128}
-	game.player.character.insert{name="seeds", count=1024}
+	game.player.character.insert{name="seeds", count=64}
 	game.player.character.insert{name="car", count=1}
-	game.player.character.insert{name="chemical-lab", count=8}
 	game.player.character.insert{name="stone-crusher", count=8}
+	game.player.character.insert{name="chemical-plant", count=8}
+	game.player.character.insert{name="empty-barrel", count=32}
+	game.player.character.insert{name="stone", count=256}
+	game.player.character.insert{name="science-pack-1", count=256}
+	game.player.character.insert{name="hydroculture", count=8}
+	game.player.character.insert{name="oil-refinery", count=8}
+	game.player.character.insert{name="offshore-pump", count=8}
+	game.player.character.insert{name="poison-capsule", count=8}
+	game.player.character.insert{name="medicine", count=8}
+
+
+	game.player.force.technologies["coal-processing"].researched = true
+	game.player.force.technologies["fertilizer"].researched = true
+	game.player.force.technologies["organic-plastic"].researched = true
+	game.player.force.technologies["medicine"].researched = true
 
 end
 
