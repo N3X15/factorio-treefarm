@@ -31,11 +31,12 @@ game.onevent(defines.events.onentitydied, function(event)
 	if event.entity.name == "field" then
 		checkFieldValidity()
 	end
-	if     (event.entity.name == "dark-thin-tree")
-		or (event.entity.name == "green-thin-tree") 
-		or (event.entity.name == "dark-green-thin-tree") 
-		or (event.entity.name == "green-tree")
-		or (event.entity.name == "dark-green-tree")
+
+	if     (event.entity.name == "germling")
+		or (event.entity.name == "very-small-tree") 
+		or (event.entity.name == "small-tree") 
+		or (event.entity.name == "medium-tree")
+		or (event.entity.name == "big-tree")
 		then
 			checkTreeValidity()
 	end
@@ -64,12 +65,11 @@ end
 game.onevent(defines.events.onplayermineditem, function(event)
 	if event.itemstack.name == "field" then
 		checkFieldValidity()
-	end
-	if     (event.itemstack.name == "dark-thin-tree")
-		or (event.itemstack.name == "green-thin-tree") 
-		or (event.itemstack.name == "dark-green-thin-tree") 
-		or (event.itemstack.name == "green-tree")
-		or (event.itemstack.name == "dark-green-tree")
+	end	
+	if (event.itemstack.name == "germling") or 
+		(event.itemstack.name == "very-small-tree") or 
+		(event.itemstack.name == "small-tree") or 
+		(event.itemstack.name == "medium-tree")
 		then
 			checkTreeValidity()
 	end
@@ -169,11 +169,17 @@ game.onevent(defines.events.onbuiltentity, function(event)
 end)
 
 function detectTreeStatus(entity)
-	if     entity.name == "dark-thin-tree"        then return 1
-	elseif entity.name == "green-thin-tree"       then return 2
-	elseif entity.name == "dark-green-thin-tree"  then return 3
-	elseif entity.name == "green-tree"            then return 4
-	elseif entity.name == "dark-green-tree"       then return 5
+	if     entity.name == "germling"        then return 1
+	elseif entity.name == "very-small-tree" then return 2
+	elseif entity.name == "small-tree"      then return 3
+	elseif entity.name == "medium-tree"     then return 4
+	elseif	(entity.name == "dark-thin-tree") or
+			(entity.name == "green-thin-tree") or
+			(entity.name == "dark-green-thin-tree") or
+			(entity.name == "green-tree") or
+			(entity.name == "dark-green-tree")
+			then
+				return 5
 	end
 end
 
@@ -200,7 +206,7 @@ game.onevent(defines.events.ontick, function(event)
 				local efficiency =  glob.treefarm.efficiency[k]
 				if field.getitemcount("fertilizer") > 0 then efficiency = efficiency * 2 end
 				local growchance = math.ceil(math.random()* 100)		
-				local growntrees = game.findentitiesfiltered{area = {field.position, {field.position.x + 7, field.position.y + 7}}, type="tree"}
+				local growntrees = game.findentitiesfiltered{area = {field.position, {field.position.x + 8, field.position.y + 8}}, type="tree"}
 				
 				if (growchance > 95) then
 					if math.random() <= efficiency then
@@ -220,7 +226,7 @@ game.onevent(defines.events.ontick, function(event)
 							if growntree[1] == nil then
 								if #growntrees < 40 then
 									--game.createentity{name = "big-tree", position = treeposition}
-									addTreeToFarm(game.createentity{name = "dark-thin-tree", position = treeposition},1)
+									addTreeToFarm(game.createentity{name = "germling", position = treeposition},1)
 									treeplaced = true
 									break
 								else
@@ -262,7 +268,7 @@ game.onevent(defines.events.ontick, function(event)
 	if (glob.treefarm.tick % (300 + math.ceil(math.random()*300))) == 0 then		
 		for k, field in pairs(glob.treefarm.field) do
 			if field.valid then	
-				local growntrees = game.findentitiesfiltered{area = {field.position, {field.position.x + 7, field.position.y + 7}}, type="tree"}
+				local growntrees = game.findentitiesfiltered{area = {field.position, {field.position.x + 8, field.position.y + 8}}, type="tree"}
 				if #growntrees > 5 then
 					local efficiency = glob.treefarm.efficiency[k]
 					if field.getitemcount("fertilizer") > 0 then efficiency = efficiency * 4 end
@@ -489,7 +495,20 @@ function updateTree(k)
 		table.remove(glob.treefarm.growingTrees.entities, k)
 		--table.remove(glob.treefarm.growingTrees.efficiency, k)
 		--table.remove(glob.treefarm.growingTrees.status, k)
-		table.insert(glob.treefarm.growingTrees.entities, k, game.createentity{name = "big-tree", position = tmpPos})
+		local tmpRandom = math.random(5)
+		local treeType = "dark-thin-tree"
+		if tmpRandom == 1 then
+			treeType = "dark-thin-tree"
+		elseif tmpRandom == 2 then
+			treeType = "green-thin-tree"
+		elseif tmpRandom == 3 then
+			treeType = "dark-green-thin-tree"
+		elseif tmpRandom == 4 then
+			treeType = "green-tree"
+		elseif tmpRandom == 5 then
+			treeType = "dark-green-tree"
+		end
+		table.insert(glob.treefarm.growingTrees.entities, k, game.createentity{name = treeType, position = tmpPos})
 	end
 
 end
