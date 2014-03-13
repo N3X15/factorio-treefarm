@@ -92,7 +92,7 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if #blockingField > 1 then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print(game.gettext("msg_buildingFail"))
+			game.player.print(game.gettext("msg_buildingFail").." A field is blocking us.")
 			return
 		end
 
@@ -101,7 +101,7 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if #blockingField > 1 then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print(game.gettext("msg_buildingFail"))
+			game.player.print(game.gettext("msg_buildingFail").." A field is blocking us.")
 			return
 		end
 
@@ -110,7 +110,7 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if #blockingField > 1 then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print(game.gettext("msg_buildingFail"))
+			game.player.print(game.gettext("msg_buildingFail").." A field is blocking us.")
 			return
 		end
 
@@ -137,10 +137,9 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if buildEnable == false then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print(game.gettext("msg_buildingFail"))
+			game.player.print(game.gettext("msg_buildingFail").." A chest is blocking us.")
 			return
 		end
-
 
 
 		local efficiency = {}
@@ -153,7 +152,7 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		if (efficiency[1] == 0) or (efficiency[2] == 0) or (efficiency[3] == 0) or (efficiency[4] == 0) then
 			game.player.character.insert{name="field", count=1}
 			event.createdentity.destroy()
-			game.player.print(game.gettext("msg_buildingFail"))
+			game.player.print(game.gettext("msg_buildingFail").." The soil is too poor.")
 		else
 			efficiency[5] = (efficiency[1] + efficiency[2] + efficiency[3] + efficiency[4]) / 4
 			glob.treefarm.field[#glob.treefarm.field + 1] = event.createdentity
