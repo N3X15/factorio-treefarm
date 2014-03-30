@@ -9,6 +9,8 @@ game.onload(function()
 	initTables()
 end)
 
+alltrees={}
+
 function tableContains(t, element)
 	for _, value in pairs(t) do
 		if value == element then
@@ -16,6 +18,21 @@ function tableContains(t, element)
 		end
 	end
 	return false
+end
+
+table.indexOf = function( t, object )
+	local result
+	 
+	if "table" == type( t ) then
+		for i=1,#t do
+			if object == t[i] then
+				result = i
+				break
+			end
+		end
+	end
+	 
+	return result
 end
 
 function iTableContains(t, element)
@@ -43,11 +60,9 @@ game.onevent(defines.events.onentitydied, function(event)
 end)
 
 function checkTreeValidity()
-	for k, tree in ipairs(glob.treefarm.growingTrees.entities) do
+	for tree,tree_data in pairs(alltrees) do
 		if not tree.valid then
-			table.remove(glob.treefarm.growingTrees.entities, k)
-			table.remove(glob.treefarm.growingTrees.efficiency, k)
-			table.remove(glob.treefarm.growingTrees.status, k)
+			alltrees[tree]=nil
 			break
 		end
 	end
@@ -160,9 +175,11 @@ game.onevent(defines.events.onbuiltentity, function(event)
 		end
 	
 	elseif event.createdentity.name == "germling" then
-		glob.treefarm.growingTrees.entities[#glob.treefarm.growingTrees.entities + 1] = event.createdentity
-		glob.treefarm.growingTrees.efficiency[#glob.treefarm.growingTrees.efficiency + 1] = calcEfficiency(event.createdentity.position)
-		glob.treefarm.growingTrees.status[#glob.treefarm.growingTrees.status + 1] = 1
+		alltrees[event.createdentity]={
+			efficiency = calcEfficiency(event.createdentity.position),
+			status = 1,
+			typepref = nil
+		}
 	end
 
 end)
@@ -182,15 +199,20 @@ function detectTreeStatus(entity)
 	end
 end
 
-function addTreeToFarm(entity, status)
+function addTreeToFarm(entity, status, typepref)
 	if status == 0 then
 		status = detectTreeStatus(entity)
 		if status == 5 then return end
 	end
-	if not iTableContains(glob.treefarm.growingTrees.entities, entity) then
-		glob.treefarm.growingTrees.entities[#glob.treefarm.growingTrees.entities + 1] = entity
-		glob.treefarm.growingTrees.efficiency[#glob.treefarm.growingTrees.efficiency + 1] = calcTreeEfficiency(entity.position)
-		glob.treefarm.growingTrees.status[#glob.treefarm.growingTrees.status + 1] = status
+	if alltrees[entity] == nil then
+		alltrees[entity]={
+			efficiency = calcEfficiency(entity.position),
+			status     = status,
+			typepref   = typepref
+		}
+		--game.player.print("New tree.")
+	else
+		alltrees[entity].typepref = typepref
 	end
 end
 
@@ -204,7 +226,7 @@ game.onevent(defines.events.ontick, function(event)
 			if field.valid then
 				local efficiency =  glob.treefarm.efficiency[k]
 				if field.getitemcount("fertilizer") > 0 then efficiency = efficiency * 2 end
-				local growchance = math.ceil(math.random()* 100)		
+				local growchance = math.ceil(math.random()* 100)
 				local growntrees = game.findentitiesfiltered{area = {field.position, {field.position.x + 8, field.position.y + 8}}, type="tree"}
 				
 				if (growchance > 95) then
@@ -225,14 +247,14 @@ game.onevent(defines.events.ontick, function(event)
 							if growntree[1] == nil then
 								if #growntrees < 40 then
 									--game.createentity{name = "big-tree", position = treeposition}
-									addTreeToFarm(game.createentity{name = "germling", position = treeposition},1)
+									addTreeToFarm(game.createentity{name = "germling", position = treeposition},1,nil)
 									treeplaced = true
 									break
 								else
 									break
 								end
 							else
-								addTreeToFarm(growntree[1],0)
+								addTreeToFarm(growntree[1],0,nil)
 							end
 						end -- (treeplaced~= true)
 					end
@@ -387,11 +409,19 @@ function initTables()
 		glob.treefarm.efficiency = {}	
 	end
 
-	if glob.treefarm.growingTrees == nil then
-		glob.treefarm.growingTrees = {}
-		glob.treefarm.growingTrees.entities = {}										-- seed table
-		glob.treefarm.growingTrees.efficiency = {}
-		glob.treefarm.growingTrees.status = {}
+	if alltrees == nil then
+		alltrees = {}
+	end
+
+	-- N3X: More efficient storage.
+	if glob.treefarm.growingTrees ~= nil then
+		for _,tree in ipairs(glob.treefarm.growingTrees.entities) do
+			if tree.valid then
+				addTreeToFarm(tree,0)
+			end
+		end
+		glob.treefarm.growingTrees=nil
+		game.player.print("Treefarm: Imported "..#alltrees.." trees.")
 	end
 
 end
@@ -445,16 +475,22 @@ end
 
 
 function growTrees()
-
 	if (glob.treefarm.tick % (60 + math.floor(math.random()*120))) == 0 then
-		for k, tree in pairs(glob.treefarm.growingTrees.entities) do
+		local trees = {}
+		for tree, _ in pairs(alltrees) do
+			table.insert(trees,tree)
+		end
+		for _,tree in ipairs(trees) do
 			if tree.valid then
-				local growchance = math.random()
-				local efficiency = math.random()
-
-				if (growchance >= 0.99) and (efficiency <= glob.treefarm.growingTrees.efficiency[k]) then
-					updateTree(k)
-					--break
+				local data = alltrees[tree]
+				if data ~= nil then
+					local growchance = math.random()
+					local efficiency = math.random()
+					-- Growchance was 0.99. Too quick.
+					if (growchance >= 0.75) and (efficiency <= data.efficiency) then
+						updateTree(tree)
+						--break
+					end
 				end
 			end
 		end
@@ -463,51 +499,72 @@ function growTrees()
 
 end
 
+function updateTree(tree)
+	data = alltrees[tree]
+	if data.status == 5 then return end
+	data.status = data.status + 1
+	
+	local tmpPos = tree.position
 
-function updateTree(k)
+	alltrees[tree]=nil
+	tree.destroy()
+	
+	local newTree
+	if data.status == 2 then		-- very small tree
+		newTree = game.createentity{name = "very-small-tree", position = tmpPos}
 
-	local tmpPos
+	elseif data.status == 3 then		-- small tree
+		newTree = game.createentity{name = "small-tree", position = tmpPos}
 
-	glob.treefarm.growingTrees.status[k] = glob.treefarm.growingTrees.status[k] + 1
+	elseif data.status == 4 then		-- medium tree
+		newTree = game.createentity{name = "medium-tree", position = tmpPos}
 
-	if glob.treefarm.growingTrees.status[k] == 2 then		-- very small tree
-		tmpPos = glob.treefarm.growingTrees.entities[k].position
-		glob.treefarm.growingTrees.entities[k].destroy()
-		table.remove(glob.treefarm.growingTrees.entities, k)
-		table.insert(glob.treefarm.growingTrees.entities, k , game.createentity{name = "very-small-tree", position = tmpPos})
-
-	elseif glob.treefarm.growingTrees.status[k] == 3 then		-- small tree
-		tmpPos = glob.treefarm.growingTrees.entities[k].position
-		glob.treefarm.growingTrees.entities[k].destroy()
-		table.remove(glob.treefarm.growingTrees.entities, k)
-		table.insert(glob.treefarm.growingTrees.entities, k , game.createentity{name = "small-tree", position = tmpPos})
-
-	elseif glob.treefarm.growingTrees.status[k] == 4 then		-- medium tree
-		tmpPos = glob.treefarm.growingTrees.entities[k].position
-		glob.treefarm.growingTrees.entities[k].destroy()
-		table.remove(glob.treefarm.growingTrees.entities, k)
-		table.insert(glob.treefarm.growingTrees.entities, k , game.createentity{name = "medium-tree", position = tmpPos})
-
-	elseif glob.treefarm.growingTrees.status[k] == 5 then		-- big tree
-		tmpPos = glob.treefarm.growingTrees.entities[k].position
-		glob.treefarm.growingTrees.entities[k].destroy()
-		table.remove(glob.treefarm.growingTrees.entities, k)
-		--table.remove(glob.treefarm.growingTrees.efficiency, k)
-		--table.remove(glob.treefarm.growingTrees.status, k)
-		local tmpRandom = math.random(5)
-		local treeType = "dark-thin-tree"
-		if tmpRandom == 1 then
-			treeType = "dark-thin-tree"
-		elseif tmpRandom == 2 then
-			treeType = "green-thin-tree"
-		elseif tmpRandom == 3 then
-			treeType = "dark-green-thin-tree"
-		elseif tmpRandom == 4 then
-			treeType = "green-tree"
-		elseif tmpRandom == 5 then
-			treeType = "dark-green-tree"
+	elseif data.status == 5 then		-- big tree
+		local treeType = data.typepref
+		if treeType == nil then
+			local tmpRandom = math.random(5)
+			if tmpRandom == 1 then
+				treeType = "dark-thin-tree"
+			elseif tmpRandom == 2 then
+				treeType = "green-thin-tree"
+			elseif tmpRandom == 3 then
+				treeType = "dark-green-thin-tree"
+			elseif tmpRandom == 4 then
+				treeType = "green-tree"
+			elseif tmpRandom == 5 then
+				treeType = "dark-green-tree"
+			end
+		--else
+		--	game.player.print("Tree forced to be type "..treeType..".")
 		end
-		table.insert(glob.treefarm.growingTrees.entities, k, game.createentity{name = treeType, position = tmpPos})
+		game.createentity{name = treeType, position = tmpPos}
 	end
-
+	if newTree ~= nil then
+		alltrees[newTree]=data
+	end
 end
+
+remote.addinterface("treefarm",
+{
+	addtree = function(treepos, status, typepref)
+		local treeType={
+			"germling",        -- 1
+			"very-small-tree", -- 2 etc
+			"small-tree",
+			"medium-tree",
+			"green-tree"
+		}
+		local tree = game.createentity{name = treeType[status], position = treepos}
+		addTreeToFarm(tree,status,typepref)
+	end,
+	checktrees = function(args)
+		local area = args.area
+		local typepref = args.typepref
+		local growntrees = game.findentitiesfiltered{area = area, type="tree"}
+		for _,tree in pairs(growntrees) do
+			if tree.valid then
+				addTreeToFarm(tree,0,typepref)
+			end
+		end
+	end
+})
