@@ -1,15 +1,64 @@
 require "defines"
 
-game.oninit(function()
-	initTables()
-end)
+--[[ Defines ]]
+-- Tree types available
+GROWN_TREE_TYPES={
+	"dark-thin-tree",
+	"green-thin-tree",
+	"dark-green-thin-tree",
+	"green-tree",
+	"dark-green-tree",
+	"green-coral"
+}
+-- Tree Status Matching
+TREE_STATUSES={
+	{"germling"},        -- 1
+	{"very-small-tree"}, -- 2 etc
+	{"small-tree"},
+	{"medium-tree"},
+	GROWN_TREE_TYPES     -- Steal from the above table.
+}
 
-
-game.onload(function()
-	initTables()
-end)
-
+-- Tile efficiencies.
+TILE_EFFICIENCY={
+	["grass"]       =1.00,
+	["grass-medium"]=1.00,
+	["grass-dry"]   =1.00,
+	["dirt"]        =0.95,
+	["dirt-dark"]   =0.95,
+	["hills"]       =0.70,
+	["sand"]        =0.60,
+	["sand-dark"]   =0.60
+}
+-- [[ Globals ]]
+-- Non-persistent tree storage.  Rebuilt on load.
+-- Works around a serpent serialization problem.
 alltrees={}
+
+-- Instead of duplicating code everywhere. - N3X
+function detectTreeStatus(entity)
+	for status, matchtable in ipairs(TREE_STATUSES) do
+		for _, name in ipairs(matchtable) do
+			if entity.name == name then
+				return status
+			end
+		end
+	end
+	--[[
+	if     entity.name == "germling"        then return 1
+	elseif entity.name == "very-small-tree" then return 2
+	elseif entity.name == "small-tree"      then return 3
+	elseif entity.name == "medium-tree"     then return 4
+	elseif	(entity.name == "dark-thin-tree") or
+			(entity.name == "green-thin-tree") or
+			(entity.name == "dark-green-thin-tree") or
+			(entity.name == "green-tree") or
+			(entity.name == "dark-green-tree")
+			then
+				return 5
+	end
+	]]--
+end
 
 function tableContains(t, element)
 	for _, value in pairs(t) do
@@ -44,18 +93,22 @@ function iTableContains(t, element)
 	return false
 end
 
+game.oninit(function()
+	initTables()
+end)
+
+
+game.onload(function()
+	initTables()
+end)
+
 game.onevent(defines.events.onentitydied, function(event)
 	if event.entity.name == "field" then
 		checkFieldValidity()
 	end
 
-	if     (event.entity.name == "germling")
-		or (event.entity.name == "very-small-tree") 
-		or (event.entity.name == "small-tree") 
-		or (event.entity.name == "medium-tree")
-		or (event.entity.name == "big-tree")
-		then
-			checkTreeValidity()
+	if detectTreeStatus(event.entity) ~= nil then
+		checkTreeValidity()
 	end
 end)
 
@@ -81,12 +134,8 @@ game.onevent(defines.events.onplayermineditem, function(event)
 	if event.itemstack.name == "field" then
 		checkFieldValidity()
 	end	
-	if (event.itemstack.name == "germling") or 
-		(event.itemstack.name == "very-small-tree") or 
-		(event.itemstack.name == "small-tree") or 
-		(event.itemstack.name == "medium-tree")
-		then
-			checkTreeValidity()
+	if detectTreeStatus(event.itemstack) ~= nil then
+		checkTreeValidity()
 	end
 end)
 
@@ -184,25 +233,11 @@ game.onevent(defines.events.onbuiltentity, function(event)
 
 end)
 
-function detectTreeStatus(entity)
-	if     entity.name == "germling"        then return 1
-	elseif entity.name == "very-small-tree" then return 2
-	elseif entity.name == "small-tree"      then return 3
-	elseif entity.name == "medium-tree"     then return 4
-	elseif	(entity.name == "dark-thin-tree") or
-			(entity.name == "green-thin-tree") or
-			(entity.name == "dark-green-thin-tree") or
-			(entity.name == "green-tree") or
-			(entity.name == "dark-green-tree")
-			then
-				return 5
-	end
-end
 
 function addTreeToFarm(entity, status, typepref)
 	if status == 0 then
 		status = detectTreeStatus(entity)
-		if status == 5 then return end
+		if status == nil or status == 5 then return end
 	end
 	if alltrees[entity] == nil then
 		alltrees[entity]={
@@ -232,13 +267,14 @@ game.onevent(defines.events.ontick, function(event)
 				if (growchance > 95) then
 					if math.random() <= efficiency then
 						local treeplaced = false					
-						-- Loop maximum of 49 times.
+						-- Loop maximum of 49 times to prevent infloops. - N3X
 						for loop=0,49 do
 							local growntree = {}					
 							local treeposition ={}
 							treeposition.x = math.floor(math.random()*7) + field.position.x + 1
 							treeposition.y = math.floor(math.random()*7) + field.position.y + 1
 							growntree = game.findentitiesfiltered{area = {treeposition, treeposition}, type="tree"}
+							-- Destroy any pre-existing trees at this location. -- N3X
 							if #growntree > 1 then
 								for id=2,#growntree do
 									growntree[id].destroy()
@@ -302,10 +338,13 @@ game.onevent(defines.events.ontick, function(event)
 						local trees_cut=0
 						-- This is a predictable pattern, but I'd rather not deal with a table being resized while it's being iterated.
 						for _, tree in pairs(growntrees) do
-							if tree.valid and (trees_cut + 1) <= rnd_out and detectTreeStatus(tree)==5 then
-								tree.destroy()
-								wood_produced = wood_produced + 5
-								trees_cut = trees_cut + 1
+							if tree.valid then
+								local status = detectTreeStatus(tree)
+								if status ~= nil and (trees_cut + 1) <= rnd_out and status == 5 then
+									tree.destroy()
+									wood_produced = wood_produced + 5
+									trees_cut = trees_cut + 1
+								end
 							end
 						end
 						checkTreeValidity()
@@ -325,22 +364,12 @@ end)
 
 function calcEfficiency(position)
 
-	local efficiency = 0
+	local efficiency = 0.00
 	local x,y
 
 	for x = 0, 7, 7 do
 		for y = 0, 7 , 7 do
-			if game.gettile(position.x + x, position.y + y).name == "grass" then
-				efficiency = efficiency + 1.00
-			elseif game.gettile(position.x + x, position.y + y).name == "dirt" then
-				efficiency = efficiency + 0.95
-			elseif game.gettile(position.x + x, position.y + y).name == "hills" then
-				efficiency = efficiency + 0.70
-			elseif game.gettile(position.x + x, position.y + y).name == "sand" then
-				efficiency = efficiency + 0.60
-			else
-				efficiency = efficiency + 0.00
-			end
+			efficiency = efficiency + getTileEfficiency(game.gettile(position.x + x, position.y + y).name)
 		end
 	end
 
@@ -348,34 +377,14 @@ function calcEfficiency(position)
 	return efficiency
 end
 
-
-function calcTreeEfficiency(position)
-
-	local efficiency = 0
-
-	if game.gettile(position.x, position.y).name == "grass" then
-		efficiency = efficiency + 1.00
-	elseif game.gettile(position.x, position.y).name == "grass-medium" then
-		efficiency = efficiency + 1.00
-	elseif game.gettile(position.x, position.y).name == "grass-dry" then
-		efficiency = efficiency + 1.00
-	elseif game.gettile(position.x, position.y).name == "dirt" then
-		efficiency = efficiency + 0.95
-	elseif game.gettile(position.x, position.y).name == "dirt-dark" then
-		efficiency = efficiency + 0.95
-	elseif game.gettile(position.x, position.y).name == "hills" then
-		efficiency = efficiency + 0.70
-	elseif game.gettile(position.x, position.y).name == "sand" then
-		efficiency = efficiency + 0.60
-	elseif game.gettile(position.x, position.y).name == "sand-dark" then
-		efficiency = efficiency + 0.60
+function getTileEfficiency(tilename)
+	local efficiency = TILE_EFFICIENCY[tilename]
+	if efficiency == nil then
+		return 0.00
 	else
-		efficiency = efficiency + 0.00
+		return efficiency
 	end
-
-	return efficiency
 end
-
 
 function calcEfficiencyMigration()
 
@@ -409,6 +418,8 @@ function initTables()
 		glob.treefarm.efficiency = {}	
 	end
 
+	-- Non-persistent storage.  Serpent has issues if there are
+	-- more than 200 items in a table. - N3X
 	if alltrees == nil then
 		alltrees = {}
 	end
@@ -417,7 +428,7 @@ function initTables()
 	if glob.treefarm.growingTrees ~= nil then
 		for _,tree in ipairs(glob.treefarm.growingTrees.entities) do
 			if tree.valid then
-				addTreeToFarm(tree,0)
+				addTreeToFarm(tree,0,nil)
 			end
 		end
 		glob.treefarm.growingTrees=nil
@@ -486,8 +497,8 @@ function growTrees()
 				if data ~= nil then
 					local growchance = math.random()
 					local efficiency = math.random()
-					-- Growchance was 0.99. Too quick.
-					if (growchance >= 0.75) and (efficiency <= data.efficiency) then
+
+					if (growchance >= 0.99) and (efficiency <= data.efficiency) then
 						updateTree(tree)
 						--break
 					end
@@ -522,18 +533,8 @@ function updateTree(tree)
 	elseif data.status == 5 then		-- big tree
 		local treeType = data.typepref
 		if treeType == nil then
-			local tmpRandom = math.random(5)
-			if tmpRandom == 1 then
-				treeType = "dark-thin-tree"
-			elseif tmpRandom == 2 then
-				treeType = "green-thin-tree"
-			elseif tmpRandom == 3 then
-				treeType = "dark-green-thin-tree"
-			elseif tmpRandom == 4 then
-				treeType = "green-tree"
-			elseif tmpRandom == 5 then
-				treeType = "dark-green-tree"
-			end
+			local idx = math.random(#GROWN_TREE_TYPES)
+			treeType = GROWN_TREE_TYPES[idx]
 		--else
 		--	game.player.print("Tree forced to be type "..treeType..".")
 		end
@@ -544,19 +545,21 @@ function updateTree(tree)
 	end
 end
 
+-- Remote API for addons - N3X
 remote.addinterface("treefarm",
 {
+	-- Create a tree at this position.
 	addtree = function(treepos, status, typepref)
-		local treeType={
-			"germling",        -- 1
-			"very-small-tree", -- 2 etc
-			"small-tree",
-			"medium-tree",
-			"green-tree"
-		}
-		local tree = game.createentity{name = treeType[status], position = treepos}
+		local treeselect = TREE_STATUSES[status]
+		local ti = 1
+		if #treeselect > 1 then
+			ti = math.random(#treeselect)
+		end
+		local tree = game.createentity{name = treeselect[ti], position = treepos}
 		addTreeToFarm(tree,status,typepref)
 	end,
+
+	-- Add any pre-existing trees to storage.
 	checktrees = function(args)
 		local area = args.area
 		local typepref = args.typepref
